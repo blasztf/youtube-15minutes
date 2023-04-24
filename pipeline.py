@@ -40,13 +40,15 @@ ENV_TEMPLATE_DESCRIPTION_FILE = os.path.join(ENV_CONF_DIR, "description.tmpl")
 ENV_TEMPLATE_KEYWORDS_FILE = os.path.join(ENV_CONF_DIR, "keywords.tmpl")
 ENV_WATERMARK_IMAGE_FILE = os.path.join(ENV_CONF_DIR, "watermark.png")
 ENV_LOCKED_FILE = os.path.join(ENV_CONF_DIR, ".lock")
-ENV_LOGIN_COOKIES_FILE = os.path.join(ENV_CONF_DIR, "login_cookies.json")
+ENV_LOGIN_COOKIES_FILE = os.path.join(ENV_CONF_DIR, "login.json")
 ENV_CHROMEDRIVER_FILE = os.path.join(ENV_CONF_DIR, "chromedriver.exe")
 
 METADATA_GENERATED_PATH_FORMAT = os.path.join(ENV_GEN_DIR, "{OUTPUT_NAME} -- metadata.csv")
 METADATA_HEADER = ['id', 'file_dir', 'filename', 'title', 'description', 'keywords', 'privacy_status', 'watermarked', 'youtube_id']
 METADATA_PRIVACY_STATUS = "public"
 METADATA_WATERMARKED = "Done"
+
+FFMPEG_BIN_PATH = "ffmpeg"
 
 # Initialize it first before use.
 ENV_CLIENT_SECRETS_FILE = None
@@ -205,6 +207,9 @@ def perform(process):
         lock_program(False)
         exit()
 
+def printout(text):
+    print (f">> {text}\n")
+
 def write_metadata(dst_path:str, metadata:list, headers:list):
     with open(dst_path, 'w', newline='') as fmetadata:
         writer = csv.DictWriter(fmetadata, fieldnames=headers, delimiter=';')
@@ -239,7 +244,7 @@ def watermark_video(video_name:str, img_path:str) -> int:
             output = os.path.join(video['file_dir'], f"{basename} - watermarked{ext}")
             
             cmd = [
-                "ffmpeg",
+                FFMPEG_BIN_PATH,
                 "-y", 
                 "-hwaccel", "cuda",
                 "-hwaccel_output_format", "cuda",
@@ -274,7 +279,7 @@ def split_15min_video(src_path:str, dst_dir:str, dst_name:str, dst_ext:str) -> i
     os.makedirs(dst_dir, exist_ok=True)
 
     cmd = [
-        "ffmpeg", 
+        FFMPEG_BIN_PATH, 
         "-i", src_path,
         "-f", "segment",
         "-map", "0",
@@ -315,9 +320,6 @@ def write_metadata_video(dst_dir:str, dst_name:str, dst_ext:str, dst_title:str, 
     write_metadata(METADATA_GENERATED_PATH_FORMAT.format(OUTPUT_NAME=dst_name), list_video_dict, METADATA_HEADER)
 
     return 0
-
-def printout(text):
-    print (f">> {text}\n")
 
 def process_video(dst_name):
     description_part = ""
@@ -457,15 +459,21 @@ def process_video2(dst_name):
 def get_youtube_instance2(secrets_file, upload_scope, api_service_name, api_version, prompt_code="Enter code: "):
     opts = None
     exe_path = ENV_CHROMEDRIVER_FILE
+
+    f = open(secrets_file, 'r')
+    data = f.read()
+    f.close()
+
+    if data.strip() == "":
+        printout(f"Login cookies file at '{ENV_LOGIN_COOKIES_FILE}' is empty! Please copy your login cookies into that file (using 'EditThisCookie' plugin).")
+        return None
+
     # opts = ChromeOptions()
     # opts.add_argument("--headless=new")
     driver = webdriver.Chrome(executable_path=exe_path, options=opts) if opts is not None else webdriver.Chrome(executable_path=exe_path)
     driver.get("https://youtube.com")
 
-    f = open(secrets_file, 'r')
-    data = json.loads(f.read())
-    f.close()
-
+    data = json.loads(data)
     for cookie in data:
         cookie.pop('sameSite')
         driver.add_cookie(cookie)
@@ -625,7 +633,7 @@ def upload_video2(youtube2, video_obj):
 
 ################
 
-def prepare_environment():
+def prepare_environment(ffmpeg_path=None, use_data_api=False):
     if not os.path.exists(ENV_GEN_DIR):
         os.makedirs(ENV_GEN_DIR, exist_ok=True)
     if not os.path.exists(ENV_CONF_DIR):
@@ -637,6 +645,10 @@ def prepare_environment():
         f = open(ENV_TEMPLATE_KEYWORDS_FILE, 'w')
         f.close()
 
+    if not os.path.exists(ENV_LOGIN_COOKIES_FILE):
+        f = open(ENV_LOGIN_COOKIES_FILE, 'w')
+        f.close()
+
     if not os.path.exists(ENV_DATA_FILE):
         f = open(ENV_DATA_FILE, 'w')
         w = csv.DictWriter(f, fieldnames=DATA_HEADER, delimiter=';')
@@ -644,27 +656,37 @@ def prepare_environment():
         f.close()
 
     global ENV_CLIENT_SECRETS_FILE
+    global FFMPEG_BIN_PATH
 
     ENV_CLIENT_SECRETS_FILE = get_secret_id()
+
+    if ffmpeg_path:
+        FFMPEG_BIN_PATH = ffmpeg_path
     
-    if (ENV_CLIENT_SECRETS_FILE is None):
-        printout("Can not find client secrets id!")
-        return False
+    # Check if using youtube data API.
+    if use_data_api:
+        if ENV_CLIENT_SECRETS_FILE is None:
+            printout("Can not find client secrets id!")
+            return False
+    else:
+        if not os.path.exists(ENV_CHROMEDRIVER_FILE):
+            printout("This program using Selenium with Chrome when not use Youtube Data API. Please download chromedriver from 'https://chromedriver.chromium.org/' and copy 'chromedriver.exe' into '.conf' directory.")
+            return False
     
     return True
 
 ### Initialize program ###
 
-def main(args):
+def main(args):   
+    # step 0
+    printout("PERFORMING: Preparing environment...")
+    perform(prepare_environment(args.ffmpeg_path, args.use_data_api))
+    
     if is_program_locked():
         exit("Program already opening!")
 
     lock_program()
-    
-    # step 0
-    printout("PERFORMING: Preparing environment...")
-    perform(prepare_environment())
-    
+
     if args.prepare_only:
         lock_program(False)
         exit()
@@ -702,7 +724,7 @@ def main(args):
             if item['status'] == DATA_STATUS_UPLOAD:
                 # step 4
                 printout("PERFORMING: Uploading splitted video...")
-                perform(process_video2(item['name']))
+                perform(process_video2(item['name'])) if not args.use_data_api else perform(process_video(item['name']))
                 item['status'] = DATA_STATUS_DONE
                 write_metadata(ENV_DATA_FILE, data, DATA_HEADER)
     
@@ -715,9 +737,8 @@ if __name__ == "__main__":
         epilog='Quotes of the day => Help yourself! Don\'t depends on the others.\n'
     )
 
-    parser.add_argument('-i', '--input')
-    parser.add_argument('-n', '--name')
-    parser.add_argument('-t', '--title')
+    parser.add_argument('-f', '--ffmpeg-path')
+    parser.add_argument('-a', '--use-data-api', action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument('-p', '--prepare-only', action=argparse.BooleanOptionalAction, default=False)
 
     main(parser.parse_args())
