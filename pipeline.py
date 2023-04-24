@@ -725,7 +725,7 @@ def main(args):
 
     # step 1
     data = read_metadata(ENV_DATA_FILE, DATA_HEADER)
-
+    
     for item in data:
         if item['status'] != DATA_STATUS_DONE:
             printout(f"PROCESSING VIDEO \"{item['source']}\"...")
