@@ -160,4 +160,8 @@ uploaded_video_link.txt
 vdata.csv
 install.bat
 test.py
+<<<<<<< HEAD
 vdata.csv
+=======
+vdata.csv
+>>>>>>> v0.0.1
