@@ -417,9 +417,41 @@ def upload_video(youtube, video_obj):
 
 ### NEW FUNCTION ###
 
-def rewrite_description2(youtube, video_obj, video_description):
-    youtube = get_youtube_instance(ENV_CLIENT_SECRETS_FILE, YOUTUBE_UPLOAD_SCOPE, YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION)
-    return rewrite_description(youtube, video_obj, video_description)
+def rewrite_description2(youtube2, video_obj, video_description):
+    prepare_time = 6
+    video_id = video_obj['youtube_id']
+
+    # Rewrite video description.
+    youtube2.get(f"https://studio.youtube.com/video/{video_id}/edit")
+    xpath = "/html/body/ytcp-app/ytcp-entity-page/div/div/main/div/ytcp-animatable[10]/ytcp-video-details-section/ytcp-video-metadata-editor/div/ytcp-video-metadata-editor-basics/div[2]/ytcp-social-suggestions-textbox/ytcp-form-input-container/div[1]/div[2]/div/ytcp-social-suggestion-input/div"
+    el = youtube2.find_elements(By.XPATH, xpath)[0]
+    el.click_pro()
+    el.send_keys(Keys.CONTROL, 'a')
+    el.send_keys(video_description)
+    
+    time.sleep(prepare_time)
+    
+    # Click save button.
+    xpath = "/html/body/ytcp-app/ytcp-entity-page/div/div/main/div/ytcp-animatable[10]/ytcp-video-details-section/ytcp-sticky-header/ytcp-entity-page-header/div/div[2]/ytcp-button[@id='save']"
+    el = youtube2.find_elements(By.XPATH, xpath)[0]
+    el.click_pro()
+
+    sleep_time = 3
+    max_retries = 1800 / sleep_time
+    count_retries = 0
+    has_attribute = lambda attr : True if attr is not None else False
+    while True:
+        # If button become gray (disabled) from blue (active), it means done (hopefully).
+        if has_attribute(el.value_of_css_property('disabled')):
+            printout("Description rewrited.")            
+            return True
+        
+        time.sleep(sleep_time)
+        count_retries += 1
+        if count_retries >= max_retries:
+            break
+
+    return False
 
 def process_video2(dst_name):
     description_part = ""
