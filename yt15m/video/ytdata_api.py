@@ -15,8 +15,6 @@ sys.path.append(os.path.abspath(os.path.join(__file__, os.pardir, os.pardir)))
 
 import helper
 
-ENV_DEBUG = helper.debug(True)
-
 # Explicitly tell the underlying HTTP transport library not to retry, since
 # we are handling retry logic ourselves.
 httplib2.RETRIES = 1
@@ -56,7 +54,7 @@ def init_youtube(secrets_file, upload_scope, api_service_name, api_version, prom
 
     return None if credentials is None or not credentials.valid else build(api_service_name, api_version, credentials=credentials)
 
-def upload(youtube, video_file, video_title, video_category, video_description, video_keywords, video_privacy_status, video_is_for_kids=False):
+def upload_video(youtube, video_file, video_title, video_category, video_description, video_keywords, video_privacy_status='public', video_is_for_kids=False):
     tags = None
     if video_keywords:
         tags = video_keywords.split(",")
@@ -83,6 +81,45 @@ def upload(youtube, video_file, video_title, video_category, video_description, 
     youtube_id = __resumable_upload(insert_request)
     return youtube_id
 
+def rewrite_description(youtube, video_id, video_description, video_title, video_category):
+    body=dict(
+        id=video_id,
+        snippet=dict(
+            title=video_title,
+            categoryId=video_category,
+            description=video_description,
+        )
+    )
+
+    update_request = youtube.videos().update(
+        part=",".join(body.keys()),
+        body=body
+    )
+
+    result = update_request.execute()
+
+    return result['id'] if result else None
+
+def add_playlist_item(youtube, playlist_id, video_id):
+    body=dict(
+        snippet=dict(
+            playlistId=playlist_id,
+            resourceId=dict(
+                kind="youtube#video",
+                videoId=video_id
+            )
+        )
+    )
+
+    insert_request = youtube.playlistItems().insert(
+        part=",".join(body.keys()),
+        body=body
+    )
+
+    result = insert_request.execute()
+
+    return result['snippet']['resourceId']['videoId'] if result else None
+
 def __resumable_upload(insert_request):
     response = None
     error = None
@@ -92,9 +129,9 @@ def __resumable_upload(insert_request):
             #print("Uploading file...")
             status, response = insert_request.next_chunk()
             if 'id' in response:
-                helper.log(ENV_DEBUG, "Video id '%s' was successfully uploaded." % response['id'])
+                helper.log("Video id '%s' was successfully uploaded." % response['id'], True)
             else:
-                helper.log(ENV_DEBUG, "The upload failed with an unexpected response: %s" % response)
+                helper.log("The upload failed with an unexpected response: %s" % response, False)
                 return None
         except HttpError as e:
             if e.resp.status in RETRIABLE_STATUS_CODES:
@@ -106,15 +143,15 @@ def __resumable_upload(insert_request):
             error = "A retriable error occurred: %s" % e
 
     if error is not None:
-        helper.log(ENV_DEBUG, error)
+        helper.log(error, False)
         retry += 1
         if retry > MAX_RETRIES:
-            helper.log(ENV_DEBUG, "No longer attempting to retry.")
+            helper.log("No longer attempting to retry.", False)
             return None
 
         max_sleep = 2 ** retry
         sleep_seconds = random.random() * max_sleep
-        helper.log(ENV_DEBUG, "Sleeping %f seconds and then retrying..." % sleep_seconds)
+        helper.log("Sleeping %f seconds and then retrying..." % sleep_seconds, False)
         time.sleep(sleep_seconds)
 
     return(response['id'])
