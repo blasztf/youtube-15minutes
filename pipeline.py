@@ -421,8 +421,13 @@ def rewrite_description2(youtube2, video_obj, video_description):
     prepare_time = 6
     video_id = video_obj['youtube_id']
 
+    time.sleep(prepare_time)
+
     # Rewrite video description.
     youtube2.get(f"https://studio.youtube.com/video/{video_id}/edit")
+
+    time.sleep(prepare_time)
+
     xpath = "/html/body/ytcp-app/ytcp-entity-page/div/div/main/div/ytcp-animatable[10]/ytcp-video-details-section/ytcp-video-metadata-editor/div/ytcp-video-metadata-editor-basics/div[2]/ytcp-social-suggestions-textbox/ytcp-form-input-container/div[1]/div[2]/div/ytcp-social-suggestion-input/div"
     el = youtube2.find_elements(By.XPATH, xpath)[0]
     el.click_pro()
@@ -500,8 +505,8 @@ def get_youtube_instance2(secrets_file, upload_scope, api_service_name, api_vers
         printout(f"Login cookies file at '{ENV_LOGIN_COOKIES_FILE}' is empty! Please copy your login cookies into that file (using 'EditThisCookie' plugin).")
         return None
 
-    # opts = ChromeOptions()
-    # opts.add_argument("--headless=new")
+    opts = webdriver.ChromeOptions()
+    opts.add_argument("--headless=new")
     driver = webdriver.Chrome(executable_path=exe_path, options=opts) if opts is not None else webdriver.Chrome(executable_path=exe_path)
     driver.get("https://youtube.com")
 
