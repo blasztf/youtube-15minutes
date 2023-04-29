@@ -135,9 +135,7 @@ def write_metadata_video(dst_dir:str, dst_name:str, dst_ext:str, dst_title:str, 
         shutil.move(video, os.path.join(dst_dir, name))
         counter += 1
 
-    metadata.write(METADATA_GENERATED_PATH_FORMAT.format(OUTPUT_NAME=dst_name), list_video_dict, METADATA_HEADER)
-
-    return 0
+    return metadata.write(METADATA_GENERATED_PATH_FORMAT.format(OUTPUT_NAME=dst_name), list_video_dict, METADATA_HEADER)
 
 def process_video(dst_name, use_data_api):
     description_part = ""
@@ -157,7 +155,7 @@ def process_video(dst_name, use_data_api):
         upload_scope=YOUTUBE_UPLOAD_SCOPE, 
         api_service_name=YOUTUBE_API_SERVICE_NAME, 
         api_version=YOUTUBE_API_VERSION,
-        show_web_browser=False, 
+        show_web_browser=False,
         chromedriver_file=ENV_CHROMEDRIVER_FILE
         ))
 
@@ -196,8 +194,6 @@ def process_video(dst_name, use_data_api):
         helper.log("Failed to authenticate youtube instance", False)
         return False
 
-
-
 def prepare_environment(ffmpeg_path=None, use_data_api=False):
     if not os.path.exists(ENV_GEN_DIR):
         os.makedirs(ENV_GEN_DIR, exist_ok=True)
@@ -232,7 +228,7 @@ def prepare_environment(ffmpeg_path=None, use_data_api=False):
             return False
     else:
         if not os.path.exists(ENV_CHROMEDRIVER_FILE):
-            helper.log("This program using Selenium with Chrome when not use Youtube Data API. Please download chromedriver from 'https://chromedriver.chromium.org/' and copy 'chromedriver.exe' into '.conf' directory.", False)
+            helper.log("This program using Selenium with Chrome when not using Youtube Data API. Please download chromedriver from 'https://chromedriver.chromium.org/' and copy 'chromedriver.exe' into '.conf' directory.", False)
             return False
     
     return True
