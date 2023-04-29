@@ -19,7 +19,7 @@ DATA_STATUS_WATERMARK = "Failed to watermarking video"
 DATA_STATUS_WRITE = "Failed to writing metadata"
 DATA_STATUS_UPLOAD = "Failed to uploading video"
 DATA_STATUS_DONE = "Done"
-DATA_HEADER = ['source', 'name', 'title', 'description', 'keywords', 'status']
+DATA_HEADER = ['source', 'name', 'title', 'description', 'keywords', 'playlist', 'status']
 
 ENV_GEN_DIR = os.path.join(BASE_PATH, ".gen")
 ENV_CONF_DIR = os.path.join(BASE_PATH, ".conf")
@@ -212,6 +212,10 @@ def prepare_environment(ffmpeg_path=None, use_data_api=False):
 
     if not os.path.exists(ENV_DATA_FILE):
         metadata.write(ENV_DATA_FILE, [], DATA_HEADER)
+    else:
+        if metadata.is_not_update(ENV_DATA_FILE, DATA_HEADER):
+            md = metadata.read(ENV_DATA_FILE, DATA_HEADER)
+            metadata.write(ENV_DATA_FILE, md, DATA_HEADER)
 
     global ENV_CLIENT_SECRETS_FILE
     global FFMPEG_BIN_PATH
