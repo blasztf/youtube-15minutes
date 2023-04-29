@@ -195,8 +195,9 @@ def upload_video(youtube, video_file, video_title, video_category, video_descrip
         youtube.find_elements(By.XPATH, xpath)[0].click_pro()
         helper.log(debug_text, True)
 
-    except:
-        helper.log(debug_text + " [FAILED]", False)    
+    except Exception as e:
+        helper.log(debug_text + " [FAILED]", False)
+        helper.log(e, False)  
     
     if video_id is not None:
         video_id = video_id.split('/')[-1]
@@ -245,8 +246,9 @@ def rewrite_description(youtube, video_id, video_description, **kwargs):
 
             time.sleep(sleep_time)
 
-    except:
+    except Exception as e:
         helper.log(debug_text + " [FAILED]", False)
+        helper.log(e, False)
 
     return result
 
@@ -299,8 +301,9 @@ def add_playlist_item(youtube, playlist_id, video_id, **kwargs):
 
             time.sleep(sleep_time)
 
-    except:
+    except Exception as e:
         helper.log(debug_text + " [FAILED]", False)
+        helper.log(e, False)
     
     return result
 
