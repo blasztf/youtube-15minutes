@@ -24,6 +24,7 @@ def init_youtube(cookie_login_file, show_web_browser=False, chromedriver_file="c
     if not show_web_browser:
         opts = webdriver.ChromeOptions()
         opts.add_argument("--headless=new")
+        opts.add_argument("--disable-popup-blocking")
         driver = webdriver.Chrome(executable_path=chromedriver_file, options=opts)
     else:
         driver = webdriver.Chrome(executable_path=chromedriver_file)
@@ -213,6 +214,9 @@ def rewrite_description(youtube, video_id, video_description, **kwargs):
     try:
         debug_text = "Rewrite video description."
         youtube.get(f"https://studio.youtube.com/video/{video_id}/edit")
+
+        time.sleep(prepare_time)
+
         xpath = "/html/body/ytcp-app/ytcp-entity-page/div/div/main/div/ytcp-animatable[10]/ytcp-video-details-section/ytcp-video-metadata-editor/div/ytcp-video-metadata-editor-basics/div[2]/ytcp-social-suggestions-textbox/ytcp-form-input-container/div[1]/div[2]/div/ytcp-social-suggestion-input/div"
         el = youtube.find_elements(By.XPATH, xpath)[0]
         el.click_pro()
