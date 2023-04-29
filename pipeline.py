@@ -32,7 +32,7 @@ ENV_LOGIN_COOKIES_FILE = os.path.join(ENV_CONF_DIR, "login.json")
 ENV_CHROMEDRIVER_FILE = os.path.join(ENV_CONF_DIR, "chromedriver.exe")
 
 METADATA_GENERATED_PATH_FORMAT = os.path.join(ENV_GEN_DIR, "{OUTPUT_NAME} -- metadata.csv")
-METADATA_HEADER = ['id', 'file_dir', 'filename', 'title', 'description', 'keywords', 'privacy_status', 'watermarked', 'youtube_id']
+METADATA_HEADER = ['id', 'file_dir', 'filename', 'title', 'description', 'keywords', 'privacy_status', 'watermarked', 'playlist_id', 'youtube_id']
 METADATA_PRIVACY_STATUS = "public"
 METADATA_WATERMARKED = "Done"
 
@@ -137,7 +137,7 @@ def write_metadata_video(dst_dir:str, dst_name:str, dst_ext:str, dst_title:str, 
 
     return metadata.write(METADATA_GENERATED_PATH_FORMAT.format(OUTPUT_NAME=dst_name), list_video_dict, METADATA_HEADER)
 
-def process_video(dst_name, use_data_api):
+def process_video(dst_name, use_data_api=False, playlist_id=""):
     description_part = ""
     video_category = 22
 
@@ -183,16 +183,33 @@ def process_video(dst_name, use_data_api):
 
             for video_dict in list_video_dict:
                 helper.log(f"Rewriting description \"{video_dict['title']}\"")
-                youtubeapi.rewrite_description(youtube_auth, video_dict['youtube_id'], description_part, extra_data=dict(
+                success = youtubeapi.rewrite_description(youtube_auth, video_dict['youtube_id'], description_part, extra_data=dict(
                     video_title=video_dict['title'],
                     video_category=video_category
                 ))
+
+                if not success:
+                    return False
+
+                if playlist_id != "":
+                    if video_dict['playlist_id'] == "":
+                        helper.log(f"Adding \"{video_dict['title']}\" to playlist")
+                        success = youtubeapi.add_playlist_item(youtube_auth, playlist_id, video_dict['youtube_id'])
+
+                        if not success:
+                            return False
+                        else:
+                            video_dict['playlist_id'] = playlist_id
+                            metadata.write(METADATA_GENERATED_PATH_FORMAT.format(OUTPUT_NAME=dst_name), list_video_dict, METADATA_HEADER)
+
         except HttpError as e:
             helper.log("An HTTP error %d occurred:\n%s" % (e.resp.status, e.content), False)
             return False
     else:
         helper.log("Failed to authenticate youtube instance", False)
         return False
+
+    return True
 
 def prepare_environment(ffmpeg_path=None, use_data_api=False):
     if not os.path.exists(ENV_GEN_DIR):
@@ -286,7 +303,7 @@ def main(args):
             if item['status'] == DATA_STATUS_UPLOAD:
                 # step 4
                 helper.log("PERFORMING: Uploading splitted video...")
-                perform(process_video(item['name'], args.use_data_api))
+                perform(process_video(item['name'], use_data_api=args.use_data_api, playlist_id=item['playlist']))
                 item['status'] = DATA_STATUS_DONE
                 metadata.write(ENV_DATA_FILE, data, DATA_HEADER)
     
