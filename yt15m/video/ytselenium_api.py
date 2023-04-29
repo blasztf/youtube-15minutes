@@ -7,11 +7,9 @@ from selenium_pro import webdriver
 from selenium_pro.webdriver.common.by import By
 from selenium_pro.webdriver.common.keys import Keys
 
-sys.path.append(os.path.abspath(os.path.join(__file__, os.pardir, os.pardir)))
+from yt15m import helper
 
-import helper
-
-def init_youtube(cookie_login_file, show_web_browser=False, chromedriver_file="chromedriver.exe"):
+def init_youtube(cookie_login_file, show_web_browser=False, chromedriver_file="chromedriver.exe", **kwargs):
     opts = None
 
     f = open(cookie_login_file, 'r')
@@ -29,6 +27,7 @@ def init_youtube(cookie_login_file, show_web_browser=False, chromedriver_file="c
         driver = webdriver.Chrome(executable_path=chromedriver_file, options=opts)
     else:
         driver = webdriver.Chrome(executable_path=chromedriver_file)
+
     driver.get("https://youtube.com")
 
     # inject session cookie
@@ -43,15 +42,8 @@ def init_youtube(cookie_login_file, show_web_browser=False, chromedriver_file="c
 
     return driver
     
-def __get_category_name(category_id):
-    video_category = ""
-    
-    if category_id == 22:
-        video_category = "CREATOR_VIDEO_CATEGORY_GADGETS"
-    
-    return video_category
 
-def upload_video(youtube, video_file, video_title, video_category, video_description, video_keywords, video_privacy_status="public", video_is_for_kids=False):
+def upload_video(youtube, video_file, video_title, video_category, video_description, video_keywords, video_privacy_status="public", video_is_for_kids=False, **kwargs):
     video_id = None
     
     # currently only know 1 category for gaming.
@@ -211,7 +203,7 @@ def upload_video(youtube, video_file, video_title, video_category, video_descrip
         
     return video_id
     
-def rewrite_description(youtube, video_id, video_description):
+def rewrite_description(youtube, video_id, video_description, **kwargs):
     prepare_time = 6
 
     debug_text = ""
@@ -258,7 +250,7 @@ def rewrite_description(youtube, video_id, video_description):
 
     return result
 
-def add_playlist_item(youtube, playlist_id, video_id):
+def add_playlist_item(youtube, playlist_id, video_id, **kwargs):
     prepare_time = 6
 
     debug_text = ""
@@ -272,7 +264,7 @@ def add_playlist_item(youtube, playlist_id, video_id):
         helper.log(debug_text, True)
 
         debug_text = "Choose playlist."
-        xpath = "/html/body/ytcp-playlist-dialog/tp-yt-paper-dialog/ytcp-checkbox-group/div/ul/tp-yt-iron-list/div/ytcp-ve/li/label/ytcp-checkbox-lit[@test-id='{playlist_id}']"
+        xpath = f"/html/body/ytcp-playlist-dialog/tp-yt-paper-dialog/ytcp-checkbox-group/div/ul/tp-yt-iron-list/div/ytcp-ve/li/label/ytcp-checkbox-lit[@test-id='{playlist_id}']"
         youtube.find_elements(By.XPATH, xpath)[0].click_pro()
         helper.log(debug_text, True)
 
@@ -311,3 +303,11 @@ def add_playlist_item(youtube, playlist_id, video_id):
         helper.log(debug_text + " [FAILED]", False)
     
     return result
+
+def __get_category_name(category_id):
+    video_category = ""
+    
+    if category_id == 22:
+        video_category = "CREATOR_VIDEO_CATEGORY_GADGETS"
+    
+    return video_category

@@ -1,13 +1,13 @@
-import sys
 import time
+import sys
 from termcolor import colored
 
 def __debug(enable=True):
-    return lambda : enable
+    return lambda x : enable
 
 def log(text, proc=None):
     timestamp = time.localtime()
-    timestamp = time.strftime("%d/%m/%Y, %H:%M:%S", t)
+    timestamp = time.strftime("%d/%m/%Y, %H:%M:%S", timestamp)
 
     if __debug('.')('.'):
         ori_text = text

@@ -1,4 +1,3 @@
-import csv
 import os
 import argparse
 import glob
@@ -169,7 +168,7 @@ def process_video(dst_name, use_data_api):
             for video_dict in list_video_dict:
                 if video_dict['youtube_id'] == "":
                     helper.log(f"Uploading video \"{video_dict['title']}\"")
-                    video_id = youtubeapi.upload_video(youtube_auth, up_strategy, os.path.join(video_dict['file_dir'], video_dict['filename']),
+                    video_id = youtubeapi.upload_video(youtube_auth, os.path.join(video_dict['file_dir'], video_dict['filename']),
                                 video_dict['title'],
                                 video_category,
                                 video_dict['description'],
@@ -186,7 +185,7 @@ def process_video(dst_name, use_data_api):
 
             for video_dict in list_video_dict:
                 helper.log(f"Rewriting description \"{video_dict['title']}\"")
-                youtubeapi.rewrite_description(youtube_auth, up_strategy, video_dict['youtube_id'], description_part, extra_data=dict(
+                youtubeapi.rewrite_description(youtube_auth, video_dict['youtube_id'], description_part, extra_data=dict(
                     video_title=video_dict['title'],
                     video_category=video_category
                 ))

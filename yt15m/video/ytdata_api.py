@@ -11,9 +11,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
 
-sys.path.append(os.path.abspath(os.path.join(__file__, os.pardir, os.pardir)))
-
-import helper
+from yt15m import helper
 
 # Explicitly tell the underlying HTTP transport library not to retry, since
 # we are handling retry logic ourselves.
@@ -32,7 +30,7 @@ RETRIABLE_EXCEPTIONS = (httplib2.HttpLib2Error, IOError, http.client.NotConnecte
   http.client.CannotSendRequest, http.client.CannotSendHeader,
   http.client.ResponseNotReady, http.client.BadStatusLine)
 
-def init_youtube(secrets_file, upload_scope, api_service_name, api_version, prompt_code="Please open {url}\nEnter code: "):
+def init_youtube(secrets_file, upload_scope, api_service_name, api_version, prompt_code="Please open {url}\nEnter code: ", **kwargs):
     credentials = None
     
     pathname, ext = os.path.splitext(secrets_file)
@@ -54,7 +52,7 @@ def init_youtube(secrets_file, upload_scope, api_service_name, api_version, prom
 
     return None if credentials is None or not credentials.valid else build(api_service_name, api_version, credentials=credentials)
 
-def upload_video(youtube, video_file, video_title, video_category, video_description, video_keywords, video_privacy_status='public', video_is_for_kids=False):
+def upload_video(youtube, video_file, video_title, video_category, video_description, video_keywords, video_privacy_status='public', video_is_for_kids=False, **kwargs):
     tags = None
     if video_keywords:
         tags = video_keywords.split(",")
@@ -81,7 +79,7 @@ def upload_video(youtube, video_file, video_title, video_category, video_descrip
     youtube_id = __resumable_upload(insert_request)
     return youtube_id
 
-def rewrite_description(youtube, video_id, video_description, video_title, video_category):
+def rewrite_description(youtube, video_id, video_description, video_title, video_category, **kwargs):
     body=dict(
         id=video_id,
         snippet=dict(
@@ -100,7 +98,7 @@ def rewrite_description(youtube, video_id, video_description, video_title, video
 
     return result['id'] if result else None
 
-def add_playlist_item(youtube, playlist_id, video_id):
+def add_playlist_item(youtube, playlist_id, video_id, **kwargs):
     body=dict(
         snippet=dict(
             playlistId=playlist_id,
