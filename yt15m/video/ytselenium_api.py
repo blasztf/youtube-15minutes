@@ -60,7 +60,7 @@ def upload_video(youtube, video_file, video_title, video_category, video_descrip
         helper.log("Please specify a valid file.", is_file_not_exists)
         return None
 
-    prepare_time = 6
+    prepare_time = 8
     sleep_time = 3
     max_retries = 1800 / sleep_time
     count_retries = 0
@@ -264,7 +264,14 @@ def add_playlist_item(youtube, playlist_id, video_id, **kwargs):
 
     try:
         debug_text = "Add video to playlist."
-        youtube.get(f"https://studio.youtube.com/video/{video_id}/edit")        
+        youtube.get(f"https://studio.youtube.com/video/{video_id}/edit")
+        youtube.switch_to.alert.accept()
+    except:
+        pass
+
+    try:
+        time.sleep(prepare_time)
+
         xpath = "/html/body/ytcp-app/ytcp-entity-page/div/div/main/div/ytcp-animatable[10]/ytcp-video-details-section/ytcp-video-metadata-editor/div/ytcp-video-metadata-editor-basics/div[4]/div[3]/div[1]/ytcp-video-metadata-playlists/ytcp-text-dropdown-trigger"
         youtube.find_elements(By.XPATH, xpath)[0].click_pro()
         helper.log(debug_text, True)
