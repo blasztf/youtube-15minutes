@@ -3,21 +3,23 @@ import os
 import json
 import time
 
+from urllib.parse import urlparse
+
 from selenium_pro import webdriver
 from selenium_pro.webdriver.common.by import By
 from selenium_pro.webdriver.common.keys import Keys
 
 from yt15m import helper
 
-def init_youtube(cookie_login_file, show_web_browser=False, chromedriver_file="chromedriver.exe", **kwargs):
+def init_youtube(auth_cookies_file, show_web_browser=False, chromedriver_file="chromedriver.exe", **kwargs):
     opts = None
 
-    f = open(cookie_login_file, 'r')
+    f = open(auth_cookies_file, 'r')
     data = f.read()
     f.close()
 
     if data.strip() == "":
-        helper.log(f"Login cookies file at '{cookie_login_file}' is empty! Please copy your login cookies into that file (using 'EditThisCookie' plugin).")
+        helper.log(f"Authentication cookies file at '{auth_cookies_file}' is empty! Please copy your authentication cookies into that file (using 'EditThisCookie' plugin).")
         return None
 
     driver = None
@@ -28,7 +30,7 @@ def init_youtube(cookie_login_file, show_web_browser=False, chromedriver_file="c
         driver = webdriver.Chrome(executable_path=chromedriver_file, options=opts)
     else:
         driver = webdriver.Chrome(executable_path=chromedriver_file)
-
+    
     driver.get("https://youtube.com")
 
     # inject session cookie
@@ -37,9 +39,14 @@ def init_youtube(cookie_login_file, show_web_browser=False, chromedriver_file="c
         cookie.pop('sameSite')
         driver.add_cookie(cookie)
 
-    driver.get("https://studio.youtube.com")
-
     # add login check to verify if cookie valid.
+    
+    driver.get("https://studio.youtube.com")
+    domain = urlparse(driver.current_url).netloc
+    if domain != "studio.youtube.com": # login failed
+        driver.close()
+        driver = None
+        helper.log("Authentication failed! Please check (or renew) your login cookies file...", False)
 
     return driver
     
@@ -66,9 +73,17 @@ def upload_video(youtube, video_file, video_title, video_category, video_descrip
     count_retries = 0
     has_attribute = lambda attr : True if attr is not None else False
 
-    time.sleep(prepare_time)
+    try:
+        debug_text = "Upload video file."
+        helper.log(debug_text)
+        youtube.get("https://studio.youtube.com")
+        youtube.switch_to.alert.accept()
+    except:
+        pass
     
     try:
+        time.sleep(prepare_time)
+
         debug_text = 'Click "Create" button (on top-right corner).'
         youtube.find_elements(By.XPATH, "//ytcp-button[@id='create-icon']")[0].click_pro()
         helper.log(debug_text, True)
@@ -214,7 +229,11 @@ def rewrite_description(youtube, video_id, video_description, **kwargs):
     try:
         debug_text = "Rewrite video description."
         youtube.get(f"https://studio.youtube.com/video/{video_id}/edit")
+        youtube.switch_to.alert.accept()
+    except:
+        pass
 
+    try:
         time.sleep(prepare_time)
 
         xpath = "/html/body/ytcp-app/ytcp-entity-page/div/div/main/div/ytcp-animatable[10]/ytcp-video-details-section/ytcp-video-metadata-editor/div/ytcp-video-metadata-editor-basics/div[2]/ytcp-social-suggestions-textbox/ytcp-form-input-container/div[1]/div[2]/div/ytcp-social-suggestion-input/div"
