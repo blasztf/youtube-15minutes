@@ -140,7 +140,7 @@ def write_metadata_video(dst_dir:str, dst_name:str, dst_ext:str, dst_title:str, 
 
     return metadata.write(METADATA_GENERATED_PATH_FORMAT.format(OUTPUT_NAME=dst_name), list_video_dict, METADATA_HEADER)
 
-def process_video(dst_name, use_data_api=False, playlist_id=""):
+def process_video(dst_name, playlist_id="", use_data_api=False, show_selenium_screen=False):
     description_part = ""
     video_category = 22
 
@@ -158,7 +158,7 @@ def process_video(dst_name, use_data_api=False, playlist_id=""):
         upload_scope=YOUTUBE_UPLOAD_SCOPE, 
         api_service_name=YOUTUBE_API_SERVICE_NAME, 
         api_version=YOUTUBE_API_VERSION,
-        show_web_browser=False,
+        show_web_browser=show_selenium_screen,
         chromedriver_file=ENV_CHROMEDRIVER_FILE
         ))
 
@@ -327,7 +327,7 @@ def main(args):
             if item['status'] == DATA_STATUS_UPLOAD:
                 # step 4
                 helper.log("PERFORMING: Uploading splitted video...")
-                perform(process_video(item['name'], use_data_api=args.use_data_api, playlist_id=item['playlist']))
+                perform(process_video(item['name'], playlist_id=item['playlist'], use_data_api=args.use_data_api, show_selenium_screen=args.show_selenium_screen))
                 item['status'] = DATA_STATUS_DONE
                 metadata.write(ENV_DATA_FILE, data, DATA_HEADER)
     
@@ -343,5 +343,6 @@ if __name__ == "__main__":
     parser.add_argument('-f', '--ffmpeg-path')
     parser.add_argument('-a', '--use-data-api', action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument('-p', '--prepare-only', action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument('-s', '--show-selenium-screen', action=argparse.BooleanOptionalAction, default=False)
 
     main(parser.parse_args())
