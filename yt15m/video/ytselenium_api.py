@@ -46,7 +46,7 @@ def init_youtube(auth_cookies_file, show_web_browser=False, chromedriver_file="c
     if domain != "studio.youtube.com": # login failed
         driver.close()
         driver = None
-        helper.log("Authentication failed! Please check (or renew) your login cookies file...", False)
+        helper.log("Authentication failed! Please check (or renew) your authentication cookies file...", False)
 
     return driver
     
