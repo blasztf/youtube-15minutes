@@ -19,7 +19,7 @@ DATA_STATUS_WATERMARK = "Failed to watermarking video"
 DATA_STATUS_WRITE = "Failed to writing metadata"
 DATA_STATUS_UPLOAD = "Failed to uploading video"
 DATA_STATUS_DONE = "Done"
-DATA_HEADER = ['source', 'name', 'title', 'description', 'keywords', 'status']
+DATA_HEADER = ['source', 'name', 'title', 'description', 'keywords', 'playlist', 'status']
 
 ENV_GEN_DIR = os.path.join(BASE_PATH, ".gen")
 ENV_CONF_DIR = os.path.join(BASE_PATH, ".conf")
@@ -32,9 +32,12 @@ ENV_LOGIN_COOKIES_FILE = os.path.join(ENV_CONF_DIR, "login.json")
 ENV_CHROMEDRIVER_FILE = os.path.join(ENV_CONF_DIR, "chromedriver.exe")
 
 METADATA_GENERATED_PATH_FORMAT = os.path.join(ENV_GEN_DIR, "{OUTPUT_NAME} -- metadata.csv")
-METADATA_HEADER = ['id', 'file_dir', 'filename', 'title', 'description', 'keywords', 'privacy_status', 'watermarked', 'youtube_id']
+METADATA_HEADER = ['id', 'file_dir', 'filename', 'title', 'description', 'keywords', 'privacy_status', 'watermark', 'playlist_id', 'youtube_id', 'status']
 METADATA_PRIVACY_STATUS = "public"
-METADATA_WATERMARKED = "Done"
+METADATA_WATERMARKED = "Watermarked TM"
+METADATA_STATUS_PLAYLIST = "Failed to adding part to playlist"
+METADATA_STATUS_DESCRIPTION = "Failed to rewriting part description"
+METADATA_STATUS_DONE = "Done"
 
 FFMPEG_BIN_PATH = "ffmpeg"
 
@@ -137,7 +140,7 @@ def write_metadata_video(dst_dir:str, dst_name:str, dst_ext:str, dst_title:str, 
 
     return metadata.write(METADATA_GENERATED_PATH_FORMAT.format(OUTPUT_NAME=dst_name), list_video_dict, METADATA_HEADER)
 
-def process_video(dst_name, use_data_api):
+def process_video(dst_name, playlist_id="", use_data_api=False, show_selenium_screen=False):
     description_part = ""
     video_category = 22
 
@@ -155,44 +158,82 @@ def process_video(dst_name, use_data_api):
         upload_scope=YOUTUBE_UPLOAD_SCOPE, 
         api_service_name=YOUTUBE_API_SERVICE_NAME, 
         api_version=YOUTUBE_API_VERSION,
-        show_web_browser=False,
+        show_web_browser=show_selenium_screen,
         chromedriver_file=ENV_CHROMEDRIVER_FILE
         ))
 
     if youtube_auth:
         helper.log("Successfully to authenticate youtube instance.", True)
         try:
-            list_video_dict = metadata.read(METADATA_GENERATED_PATH_FORMAT.format(OUTPUT_NAME=dst_name), METADATA_HEADER)
+            source_path = METADATA_GENERATED_PATH_FORMAT.format(OUTPUT_NAME=dst_name)
+            
+            if metadata.is_not_update(source_path, METADATA_HEADER):
+                list_video_dict = metadata.read(source_path, None)
+                metadata.write(source_path, list_video_dict, METADATA_HEADER)
+            
+            list_video_dict = metadata.read(source_path, METADATA_HEADER)
+
             for video_dict in list_video_dict:
-                if video_dict['youtube_id'] == "":
-                    helper.log(f"Uploading video \"{video_dict['title']}\"")
-                    video_id = youtubeapi.upload_video(youtube_auth, os.path.join(video_dict['file_dir'], video_dict['filename']),
-                                video_dict['title'],
-                                video_category,
-                                video_dict['description'],
-                                video_dict['keywords'])
-                    if video_id:
-                        video_dict['youtube_id'] = video_id
-                        metadata.write(METADATA_GENERATED_PATH_FORMAT.format(OUTPUT_NAME=dst_name), list_video_dict, METADATA_HEADER)
-                    else:
-                        return False
+                if video_dict['status'] == "":
+                    if video_dict['youtube_id'] == "":
+                        helper.log(f"Uploading video \"{video_dict['title']}\"")
+                        video_id = youtubeapi.upload_video(youtube_auth, os.path.join(video_dict['file_dir'], video_dict['filename']),
+                                    video_dict['title'],
+                                    video_category,
+                                    video_dict['description'],
+                                    video_dict['keywords'])
+                        if video_id:
+                            video_dict['youtube_id'] = video_id
+                            metadata.write(source_path, list_video_dict, METADATA_HEADER)
+                        else:
+                            return False
+
+                    video_dict['status'] = METADATA_STATUS_DESCRIPTION
+
+                    metadata.write(source_path, list_video_dict, METADATA_HEADER)                
 
                 description_part += f"{video_dict['title']}: https://youtu.be/{video_dict['youtube_id']}\n"
-            
             description_part += "\n" + video_dict['description']
 
             for video_dict in list_video_dict:
-                helper.log(f"Rewriting description \"{video_dict['title']}\"")
-                youtubeapi.rewrite_description(youtube_auth, video_dict['youtube_id'], description_part, extra_data=dict(
-                    video_title=video_dict['title'],
-                    video_category=video_category
-                ))
+                if video_dict['status'] == METADATA_STATUS_DESCRIPTION:
+                    helper.log(f"Rewriting description \"{video_dict['title']}\"")
+                    success = youtubeapi.rewrite_description(youtube_auth, video_dict['youtube_id'], description_part, extra_data=dict(
+                        video_title=video_dict['title'],
+                        video_category=video_category
+                    ))
+
+                    if not success:
+                        return False
+                    else:
+                        if playlist_id != "":
+                            video_dict['status'] = METADATA_STATUS_PLAYLIST
+                        else:
+                            video_dict['status'] = METADATA_STATUS_DONE
+
+                    metadata.write(source_path, list_video_dict, METADATA_HEADER)
+
+                if video_dict['status'] == METADATA_STATUS_PLAYLIST:
+                    if video_dict['playlist_id'] == "":
+                        helper.log(f"Adding \"{video_dict['title']}\" to playlist")
+                        success = youtubeapi.add_playlist_item(youtube_auth, playlist_id, video_dict['youtube_id'])
+
+                        if not success:
+                            return False
+                        else:
+                            video_dict['playlist_id'] = playlist_id
+
+                    video_dict['status'] = METADATA_STATUS_DONE
+                    metadata.write(source_path, list_video_dict, METADATA_HEADER)
+
         except HttpError as e:
             helper.log("An HTTP error %d occurred:\n%s" % (e.resp.status, e.content), False)
             return False
     else:
         helper.log("Failed to authenticate youtube instance", False)
         return False
+
+    return True
 
 def prepare_environment(ffmpeg_path=None, use_data_api=False):
     if not os.path.exists(ENV_GEN_DIR):
@@ -212,6 +253,10 @@ def prepare_environment(ffmpeg_path=None, use_data_api=False):
 
     if not os.path.exists(ENV_DATA_FILE):
         metadata.write(ENV_DATA_FILE, [], DATA_HEADER)
+    else:
+        if metadata.is_not_update(ENV_DATA_FILE, DATA_HEADER):
+            md = metadata.read(ENV_DATA_FILE, None)
+            metadata.write(ENV_DATA_FILE, md, DATA_HEADER)
 
     global ENV_CLIENT_SECRETS_FILE
     global FFMPEG_BIN_PATH
@@ -282,7 +327,7 @@ def main(args):
             if item['status'] == DATA_STATUS_UPLOAD:
                 # step 4
                 helper.log("PERFORMING: Uploading splitted video...")
-                perform(process_video(item['name'], args.use_data_api))
+                perform(process_video(item['name'], playlist_id=item['playlist'], use_data_api=args.use_data_api, show_selenium_screen=args.show_selenium_screen))
                 item['status'] = DATA_STATUS_DONE
                 metadata.write(ENV_DATA_FILE, data, DATA_HEADER)
     
@@ -298,5 +343,6 @@ if __name__ == "__main__":
     parser.add_argument('-f', '--ffmpeg-path')
     parser.add_argument('-a', '--use-data-api', action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument('-p', '--prepare-only', action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument('-s', '--show-selenium-screen', action=argparse.BooleanOptionalAction, default=False)
 
     main(parser.parse_args())

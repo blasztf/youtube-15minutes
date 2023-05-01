@@ -17,3 +17,19 @@ def read(src_path:str, headers:list):
         for meta in metadata:
             data.append(meta)
     return data
+
+def is_not_update(src_path:str, latest_headers:list):
+    headers = None
+
+    with open(src_path, 'r') as fmetadata:
+        metadata = csv.reader(fmetadata, delimiter=';')
+
+        for meta in metadata:
+            headers = meta
+            break
+
+    for header in latest_headers:
+        if header not in headers:
+            return True
+
+    return False
