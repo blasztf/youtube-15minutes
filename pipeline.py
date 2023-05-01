@@ -82,7 +82,7 @@ def perform(process):
     if process is False:
         helper.log("FAILED TO PERFORM!", False)
         lock_program(False)
-        exit()
+        raise
 
 def watermark_video(video_name:str, img_path:str) -> int:
     if not os.path.exists(img_path):
@@ -280,6 +280,58 @@ def prepare_environment(ffmpeg_path=None, use_data_api=False):
 
 ### Initialize program ###
 
+def start(video_source, video_name, video_title, video_description, video_keywords, video_playlist=None, pipeline_status=None, pipeline_options=None):
+    use_data_api = False
+    show_selenium_screen = False
+    ffmpeg_path = 'ffmpeg'
+
+    if pipeline_options:
+        if pipeline_options['use_data_api']: 
+            use_data_api = pipeline_options['use_data_api']
+        if pipeline_options['show_selenium_screen']:
+            show_selenium_screen = pipeline_options['show_selenium_screen']
+        if pipeline_options['ffmpeg_path']:
+            ffmpeg_path = pipeline_options['ffmpeg_path']
+
+    try:
+        # step 0
+        helper.log("PERFORMING: Preparing environment...")
+        perform(prepare_environment(ffmpeg_path, use_data_api))
+
+        if pipeline_status != DATA_STATUS_DONE:
+            helper.log(f"PROCESSING VIDEO \"{video_source}\"...")
+            _, output_ext = os.path.splitext(video_source)
+            output_path = os.path.join(ENV_GEN_DIR, video_name)
+
+            if pipeline_status == "":
+                # step 2
+                helper.log("PERFORMING: Splitting video to 15 minute long...")
+                perform(split_15min_video(video_source, output_path, video_name, output_ext))
+                pipeline_status = DATA_STATUS_WRITE
+
+            if pipeline_status == DATA_STATUS_WRITE:
+                # step 3
+                helper.log("PERFORMING: Writing metadata for splitted video...")
+                perform(write_metadata_video(output_path, video_name, output_ext, video_title, video_description, video_keywords))
+                pipeline_status = DATA_STATUS_WATERMARK
+
+            if pipeline_status == DATA_STATUS_WATERMARK:
+                # step 2.5
+                helper.log("PERFORMING: Watermarking splitted video...")
+                perform(watermark_video(video_name, ENV_WATERMARK_IMAGE_FILE))
+                pipeline_status = DATA_STATUS_UPLOAD
+
+            if pipeline_status == DATA_STATUS_UPLOAD:
+                # step 4
+                helper.log("PERFORMING: Uploading splitted video...")
+                perform(process_video(video_name, playlist_id=video_playlist, use_data_api=use_data_api, show_selenium_screen=show_selenium_screen))
+                pipeline_status = DATA_STATUS_DONE
+    except:
+        pass
+
+    return pipeline_status
+
+
 def main(args):   
     # step 0
     helper.log("PERFORMING: Preparing environment...")
@@ -335,10 +387,18 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        prog='Youtube-Uploader-Pipeline',
-        description='Generate and upload compatible youtube video size.',
-        epilog='Quotes of the day => Help yourself! Don\'t depends on the others.\n'
+        prog='Youtube-15Minutes-Pipeline',
+        description='Generate and upload compatible youtube video size.'
     )
+
+    parser.add_argument('--video-source')
+    parser.add_argument('--video-name')
+    parser.add_argument('--video-title')
+    parser.add_argument('--video-description')
+    parser.add_argument('--video-keywords')
+    parser.add_argument('--video-playlist')
+    
+    parser.add_argument('--pipeline-last-status')
 
     parser.add_argument('-f', '--ffmpeg-path')
     parser.add_argument('-a', '--use-data-api', action=argparse.BooleanOptionalAction, default=False)
