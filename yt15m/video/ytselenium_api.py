@@ -142,7 +142,7 @@ def upload_video(youtube, video_file, video_title, video_category, video_descrip
 
         # Click description div text field.
         debug_text = "Click description div text field."
-        xpath = "/html/body/ytcp-uploads-dialog/tp-yt-paper-dialog/div/ytcp-animatable[1]/ytcp-ve/ytcp-video-metadata-editor/div/ytcp-video-metadata-editor-basics/div[2]/ytcp-social-suggestions-textbox/ytcp-form-input-container/div[1]/div[2]/div/ytcp-social-suggestion-input/div"
+        xpath = "/html/body/ytcp-uploads-dialog/tp-yt-paper-dialog/div/ytcp-animatable[1]/ytcp-ve/ytcp-video-metadata-editor/div/ytcp-video-metadata-editor-basics/div[2]/ytcp-video-description/div/ytcp-social-suggestions-textbox/ytcp-form-input-container/div[1]/div[2]/div/ytcp-social-suggestion-input/div"
         #xpath = "//ytcp-social-suggestions-textbox[@id='description-textarea']/*[@id='container']/*[@id='outer']/*[@id='child-input']/*[@id='container-content']/*[@id='input']/*[@id='textbox']"
         youtube.find_elements(By.XPATH, xpath)[0].click_pro()
         helper.log(debug_text, True)
@@ -235,8 +235,8 @@ def rewrite_description(youtube, video_id, video_description, **kwargs):
 
     try:
         time.sleep(prepare_time)
-
-        xpath = "/html/body/ytcp-app/ytcp-entity-page/div/div/main/div/ytcp-animatable[10]/ytcp-video-details-section/ytcp-video-metadata-editor/div/ytcp-video-metadata-editor-basics/div[2]/ytcp-social-suggestions-textbox/ytcp-form-input-container/div[1]/div[2]/div/ytcp-social-suggestion-input/div"
+        xpath = "/html/body/ytcp-app/ytcp-entity-page/div/div/main/div/ytcp-animatable[10]/ytcp-video-details-section/ytcp-video-metadata-editor/div/ytcp-video-metadata-editor-basics/div[2]/ytcp-video-description/div/ytcp-social-suggestions-textbox/ytcp-form-input-container/div[1]/div[2]/div/ytcp-social-suggestion-input/div"
+        # xpath = "/html/body/ytcp-app/ytcp-entity-page/div/div/main/div/ytcp-animatable[10]/ytcp-video-details-section/ytcp-video-metadata-editor/div/ytcp-video-metadata-editor-basics/div[2]/ytcp-social-suggestions-textbox/ytcp-form-input-container/div[1]/div[2]/div/ytcp-social-suggestion-input/div"
         el = youtube.find_elements(By.XPATH, xpath)[0]
         el.click_pro()
         el.send_keys(Keys.CONTROL, 'a')
