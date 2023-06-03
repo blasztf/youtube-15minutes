@@ -82,7 +82,7 @@ def perform(process):
     if process is False:
         helper.log("FAILED TO PERFORM!", False)
         lock_program(False)
-        raise
+        raise Exception("Failed to performed latest process!")
 
 def watermark_video(video_name:str, img_path:str) -> int:
     if not os.path.exists(img_path):
