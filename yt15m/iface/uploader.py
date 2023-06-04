@@ -1,17 +1,19 @@
 from yt15m.model.video import VideoModel
+from yt15m.iface.context import Context
 
-class Uploader:
+class Uploader(Context):
 
+    def __init__(self) -> None:
+        super().__init__(None)
+
+    # context alias
     @property
     def youtube(self):
-        return self.__context
+        return self.context
 
-    @property
-    def context(self):
-        return self.__context
-
-    def auth(self):
+    def auth(self) -> bool:
         self.__context = self.auth_to_youtube()
+        return self.__context is not None
 
     def auth_to_youtube(self):
         pass

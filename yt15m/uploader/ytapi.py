@@ -18,19 +18,16 @@ from yt15m.util import helper
 # we are handling retry logic ourselves.
 httplib2.RETRIES = 1
 
-class YoutubeDataUploader(Uploader):
+class YoutubeApiUploader(Uploader):
 
-    def __init__(self) -> None:
-        pass
-
-    def prepare_auth(self, secrets_file, upload_scope, api_service_name, api_version, prompt_code="Please open {url}\nEnter code: "):
+    def __init__(self, secrets_file, upload_scope, api_service_name, api_version, prompt_code="Please open {url}\nEnter code: ") -> None:
         self.__requirements = {
             'secrets_file': secrets_file,
             'upload_scope': upload_scope,
             'api_service_name': api_service_name,
             'api_version': api_version,
             'prompt_code': prompt_code
-        }
+        }        
 
     def auth_to_youtube(self):
         credentials = None

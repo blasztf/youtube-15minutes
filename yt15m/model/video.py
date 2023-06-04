@@ -13,10 +13,6 @@ class VideoModel:
 
 class VideoModelBuilder:
 
-    @staticmethod
-    def prepare():
-        return VideoModelBuilder()
-
     def __init__(self) -> None:
         self.privacy_status = 'public'
         self.for_kids = False

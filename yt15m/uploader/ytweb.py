@@ -16,10 +16,7 @@ from yt15m.model.video import VideoModel
 
 class YoutubeWebUploader(Uploader):
     
-    def __init__(self) -> None:
-        pass
-
-    def prepare_auth(self, auth_cookies_file, show_web_browser=False, chromedriver_file="chromedriver.exe"):
+    def __init__(self, auth_cookies_file, show_web_browser=False, chromedriver_file="chromedriver.exe") -> None:
         self.__requirements = {
             'auth_cookies_file': auth_cookies_file,
             'show_web_browser': show_web_browser,
@@ -58,8 +55,7 @@ class YoutubeWebUploader(Uploader):
             cookie.pop('sameSite')
             driver.add_cookie(cookie)
 
-        # add login check to verify if cookie valid.
-        
+        # login validation to verify if cookie valid.
         driver.get("https://studio.youtube.com")
         domain = urlparse(driver.current_url).netloc
         if domain != "studio.youtube.com": # login failed
