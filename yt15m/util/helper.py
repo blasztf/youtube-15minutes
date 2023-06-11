@@ -6,6 +6,9 @@ __verbose = False
 
 # def __debug(enable=True):
 #     return lambda x : enable
+def printv():
+    global __verbose
+    print(__verbose)
 
 def enable_log():
     global __verbose
@@ -30,4 +33,37 @@ def log(text, proc=None):
         else:
             text += "|"
         print (f"{text} {ori_text}\n")
+
+def out(*values):
+    print(values, file=sys.stdout)
+        
+def err(*values):
+    print(values, file=sys.stderr)
+
+def use_hook(init=None):
+    value = [ init ]
+    def hooker(new_value):
+        value[0] = new_value
+
+    return ( value, hooker )
+
+def rts(value):
+    return '' if value is None or value == 'None' else value
+
+def rtsg(value):
+    value = None if value == '' or value == 'None' else value
+    value = False if value == 'FALSE' else True if value == 'TRUE' else value
+    return value
+
+class PerformError(Exception):
+    def __init__(self, pmessage:'PerformResult') -> None:
+        super().__init__(pmessage.error_message)
+        self.message = pmessage.error_message
+        self.result = pmessage
+
+class PerformResult:
+    def __init__(self, error_code:str='', error_message:str='') -> None:
+        self.error_code = error_code
+        self.error_message = error_message
+        
         

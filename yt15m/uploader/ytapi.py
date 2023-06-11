@@ -29,7 +29,7 @@ class YoutubeApiUploader(Uploader):
             'prompt_code': prompt_code
         }        
 
-    def auth_to_youtube(self):
+    def auth_service(self):
         credentials = None
     
         pathname, ext = os.path.splitext(self.__requirements['secrets_file'])
@@ -69,7 +69,7 @@ class YoutubeApiUploader(Uploader):
             )
         )
 
-        insert_request = self.youtube.videos().insert(
+        insert_request = self.context.videos().insert(
             part=",".join(body.keys()),
             body=body,
             media_body=MediaFileUpload(video_model.file, chunksize=-1, resumable=True)
@@ -78,17 +78,17 @@ class YoutubeApiUploader(Uploader):
         youtube_id = self.__resumable_upload(insert_request)
         return youtube_id
 
-    def rewrite_description(self, video_id: str, video_model: VideoModel) -> str:
+    def rewrite_description(self, video_description: str, video_id: str, video_model: VideoModel) -> str:
         body=dict(
             id=video_id,
             snippet=dict(
                 title=video_model.title,
                 categoryId=video_model.category,
-                description=video_model.description,
+                description=video_description,
             )
         )
 
-        update_request = self.youtube.videos().update(
+        update_request = self.context.videos().update(
             part=",".join(body.keys()),
             body=body
         )
@@ -108,7 +108,7 @@ class YoutubeApiUploader(Uploader):
             )
         )
 
-        insert_request = self.youtube.playlistItems().insert(
+        insert_request = self.context.playlistItems().insert(
             part=",".join(body.keys()),
             body=body
         )

@@ -8,7 +8,7 @@ class FfmpegEditor(Editor):
     def __init__(self, ffmpeg_path='ffmpeg') -> None:
         super().__init__(ffmpeg_path)
 
-    def split_video_equally(self, source_path, destination_path, segment_time="00:15:00") -> bool:
+    def split_equally(self, source_path, destination_path, segment_time="00:15:00") -> bool:
         pathname, extension = os.path.splitext(destination_path)
         destination_path = f"{pathname} %d{extension}"
         os.makedirs(os.path.dirname(destination_path), exist_ok=True)
@@ -24,14 +24,14 @@ class FfmpegEditor(Editor):
             "-c:a", "copy",
             destination_path
         ]
-
-        result = subprocess.run(cmd)
+        
+        result = subprocess.run(cmd, capture_output=True)
 
         print("\n")
 
         return True if result.returncode == 0 else False
 
-    def draw_video_watermark(self, source_path, destination_path, watermark_image) -> bool:
+    def draw_watermark(self, source_path, destination_path, watermark_image) -> bool:
         pathname, extension = os.path.splitext(destination_path)
         temp_path = f"{pathname}-wm{extension}"
 
@@ -54,7 +54,7 @@ class FfmpegEditor(Editor):
             temp_path
         ]
 
-        result = subprocess.run(cmd)
+        result = subprocess.run(cmd, capture_output=True)
 
         print("\n")
 
