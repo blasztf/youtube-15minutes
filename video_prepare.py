@@ -43,8 +43,8 @@ def execute_cmd(vm, verbose=False, cookie_login=None, chromedriver=None):
 
 def main():
     verbose = True
-    cookie_login = "E:\\Projects\\Github\\youtube-15minutes\\.conf\\login.json"
-    chromedriver = "E:\\Projects\\Github\\youtube-15minutes\\.conf\\chromedriver.exe"
+    cookie_login = ""
+    chromedriver = ""
     repo = VideoRepository("./", "data")
     repo_dir = os.path.join(repo.context.store, repo.context.branch)
 
