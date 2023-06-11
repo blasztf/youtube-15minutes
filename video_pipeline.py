@@ -163,17 +163,20 @@ def upload_video(set_description_part: str, repo: Repository, uploader: Uploader
 
 def update_video(description_part: str, repo: Repository, uploader: Uploader, fragments: list[VideoModel], **kwargs):
     for video in fragments:
-        if video.progress == PROGRESS_REWRITING and uploader.rewrite_description(f"{description_part}\n{video.playlist}\n\n{video.description}", video.vid, video):
-            video.progress = PROGRESS_PLAYLIST if video.playlist is not None else PROGRESS_DONE
-            repo.update(video)
-        else:
-            return (False, PerformResult('E007', PROGRESS_REWRITING))
+        if video.progress == PROGRESS_REWRITING:
+            video_playlist = "" if video.playlist is None else f"\n\n{video.playlist}"
+            if uploader.rewrite_description(f"{description_part}{video_playlist}\n\n{video.description}", video.vid, video):
+                video.progress = PROGRESS_PLAYLIST if video.playlist is not None else PROGRESS_DONE
+                repo.update(video)
+            else:
+                return (False, PerformResult('E007', PROGRESS_REWRITING))
 
-        if video.progress == PROGRESS_PLAYLIST and uploader.add_video_to_playlist(video.playlist, video.vid):
-            video.progress = PROGRESS_DONE
-            repo.update(video)
-        else:
-            return (False, PerformResult('E006', PROGRESS_PLAYLIST))
+        if video.progress == PROGRESS_PLAYLIST:
+            if uploader.add_video_to_playlist(video.playlist, video.vid):
+                video.progress = PROGRESS_DONE
+                repo.update(video)
+            else:
+                return (False, PerformResult('E006', PROGRESS_PLAYLIST))
 
     return (True, None)
 
@@ -238,7 +241,7 @@ def main(args):
             perform(upload_video(set_description_part, recorder, *uploader, *fragments))
 
             # step 6
-            log("PERFORM: Adding video fragment to playlist...")
+            log("PERFORM: Updating video fragment in youtube...")
             perform(update_video(*description_part, recorder, *uploader, *fragments))
 
         out(vars(PerformResult()))

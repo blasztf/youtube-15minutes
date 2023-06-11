@@ -151,16 +151,8 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-driver.log
 .conf/
-.gen/
-.src/
 test/
-uploaded_video_link.txt
 *-oauth2.json
-vdata.csv
-install.bat
-test.py
-vdata.csv
 test/
 test.bat

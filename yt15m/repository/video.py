@@ -7,7 +7,7 @@ from yt15m.util.helper import rtsg
 class VideoRepository(Repository):
 
     def __init__(self, path, name) -> None:
-        super().__init__(CsvDatastore(os.path.join(path, 'Video'), os.path.join(path, name)))
+        super().__init__(CsvDatastore(os.path.join(path, 'video'), name))
 
     def add(self, model: VideoModel):
         video_id = os.path.basename(model.file)

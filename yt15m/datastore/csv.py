@@ -9,10 +9,12 @@ class CsvDatastore(Datastore):
     
     def __init__(self, store, branch) -> None:
         super().__init__(store + "_csv", branch + ".csv")
+        
         self.__clates = []
 
     def open(self) -> 'CsvDatastoreContext':
         filename = os.path.join(self.store, self.branch)
+
         return CsvDatastoreContext(filename)
 
     def close(self, context: 'CsvDatastoreContext'):
@@ -182,7 +184,7 @@ class CsvDatastoreContext:
     def open(self):
         store = os.path.dirname(self.__reader_path)
         os.makedirs(store, exist_ok=True)
-
+        
         if not os.path.exists(self.__reader_path):
             with open(self.__reader_path, 'w'):
                 pass

@@ -129,7 +129,7 @@ class YoutubeWebUploader(Uploader):
                 # If processing badge become blue, (hopefully) it means video uploaded and begin processing video.
                 if processing_badge_el.value_of_css_property('fill') == "rgb(62, 166, 255)":
                     # Get self.youtube.video id.
-                    log("Uploaded. Getting self.youtube.video id.", True)
+                    log("Uploaded. Getting video id.", True)
                     video_id = self.context.find_elements(By.XPATH, "//*[@id='details']/ytcp-video-metadata-editor-sidepanel/ytcp-video-info/div/div[2]/div[1]/div[2]/span/a")[0].get_attribute('href')
                     break
                 
@@ -170,7 +170,9 @@ class YoutubeWebUploader(Uploader):
                 xpath = "/html/body/ytcp-uploads-dialog/tp-yt-paper-dialog/div/ytcp-animatable[1]/ytcp-ve/ytcp-video-metadata-editor/div/ytcp-video-metadata-editor-basics/div[5]/ytkc-made-for-kids-select/div[4]/tp-yt-paper-radio-group/tp-yt-paper-radio-button[1]"
             else:
                 xpath = "/html/body/ytcp-uploads-dialog/tp-yt-paper-dialog/div/ytcp-animatable[1]/ytcp-ve/ytcp-video-metadata-editor/div/ytcp-video-metadata-editor-basics/div[5]/ytkc-made-for-kids-select/div[4]/tp-yt-paper-radio-group/tp-yt-paper-radio-button[2]"
-            self.context.find_elements(By.XPATH, xpath)[0].click_pro()
+            a = self.context.find_elements(By.XPATH, xpath)[0]
+            log(a)
+            a.click_pro()
             log(debug_text, True)
 
             # Click advance detail.
