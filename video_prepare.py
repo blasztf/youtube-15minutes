@@ -18,7 +18,7 @@ def execute(cmd):
 
 def execute_cmd(vm, verbose=False, cookie_login=None, chromedriver=None):
     cmd = [
-        # "venv\\Scripts\\activate.bat", "&&",
+        #"venv\\Scripts\\activate.bat", "&&",
         "python", "video_pipeline.py",
         "-v" if verbose else "",
         "--video-file", str(vm.file),

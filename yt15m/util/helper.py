@@ -52,7 +52,8 @@ def rts(value):
 
 def rtsg(value):
     value = None if value == '' or value == 'None' else value
-    value = False if value == 'FALSE' else True if value == 'TRUE' else value
+    check_value = value.lower() if isinstance(value, str) else value
+    value = False if check_value == 'false' else True if check_value == 'true' else value
     return value
 
 class PerformError(Exception):

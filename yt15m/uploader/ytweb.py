@@ -8,6 +8,8 @@ from urllib.parse import urlparse
 from selenium_pro import webdriver
 from selenium_pro.webdriver.common.by import By
 from selenium_pro.webdriver.common.keys import Keys
+from selenium_pro.webdriver.support.ui import WebDriverWait
+from selenium_pro.webdriver.support import expected_conditions as EC
 
 from yt15m.iface.uploader import Uploader
 from yt15m.util.helper import *
@@ -72,12 +74,17 @@ class YoutubeWebUploader(Uploader):
         video_category = self.__get_category_name(video_category)
         
         video_privacy_status = video_model.privacy_status.upper()
+
+        xpath_editor_basics = "/html/body/ytcp-uploads-dialog/tp-yt-paper-dialog/div/ytcp-animatable[@id='scrollable-content']/ytcp-ve/ytcp-video-metadata-editor/div/ytcp-video-metadata-editor-basics"
+        xpath_editor_advanced = "/html/body/ytcp-uploads-dialog/tp-yt-paper-dialog/div/ytcp-animatable[@id='scrollable-content']/ytcp-ve/ytcp-video-metadata-editor/div/ytcp-video-metadata-editor-advanced"
         
         is_file_not_exists = not os.path.exists(video_model.file)
         
         if is_file_not_exists:
             log("Please specify a valid file.", is_file_not_exists)
             return None
+
+        wait = WebDriverWait(self.context, 20)
 
         prepare_time = 8
         sleep_time = 3
@@ -94,10 +101,10 @@ class YoutubeWebUploader(Uploader):
             pass
         
         try:
-            time.sleep(prepare_time)
-
             debug_text = 'Click "Create" button (on top-right corner).'
-            self.context.find_elements(By.XPATH, "//ytcp-button[@id='create-icon']")[0].click_pro()
+            xpath = "//ytcp-button[@id='create-icon']"
+            # wait.until(EC.visibility_of_element_located((By.XPATH, xpath))).click_pro()
+            self.context.find_elements(By.XPATH, xpath)[0].click_pro()
             log(debug_text, True)
 
             debug_text = 'Click "Upload video" dropdown item.'
@@ -141,8 +148,7 @@ class YoutubeWebUploader(Uploader):
                 time.sleep(sleep_time)
 
             debug_text = "Click title div text field."
-            xpath = "/html/body/ytcp-uploads-dialog/tp-yt-paper-dialog/div/ytcp-animatable[1]/ytcp-ve/ytcp-video-metadata-editor/div/ytcp-video-metadata-editor-basics/div[1]/ytcp-social-suggestions-textbox/ytcp-form-input-container/div[1]/div[2]/div/ytcp-social-suggestion-input/div"
-            #xpath = "//ytcp-social-suggestions-textbox[@id='title-textarea']/*[@id='container']/*[@id='outer']/*[@id='child-input']/*[@id='container-content']/*[@id='input']/*[@id='textbox']"
+            xpath = f"{xpath_editor_basics}/div[1]/ytcp-social-suggestions-textbox/ytcp-form-input-container/div[1]/div[2]/div/ytcp-social-suggestion-input/div"
             self.context.find_elements(By.XPATH, xpath)[0].click_pro()
             log(debug_text, True)
 
@@ -154,8 +160,7 @@ class YoutubeWebUploader(Uploader):
 
             # Click description div text field.
             debug_text = "Click description div text field."
-            xpath = "/html/body/ytcp-uploads-dialog/tp-yt-paper-dialog/div/ytcp-animatable[1]/ytcp-ve/ytcp-video-metadata-editor/div/ytcp-video-metadata-editor-basics/div[2]/ytcp-video-description/div/ytcp-social-suggestions-textbox/ytcp-form-input-container/div[1]/div[2]/div/ytcp-social-suggestion-input/div"
-            #xpath = "//ytcp-social-suggestions-textbox[@id='description-textarea']/*[@id='container']/*[@id='outer']/*[@id='child-input']/*[@id='container-content']/*[@id='input']/*[@id='textbox']"
+            xpath = f"{xpath_editor_basics}/div[2]/ytcp-video-description/div/ytcp-social-suggestions-textbox/ytcp-form-input-container/div[1]/div[2]/div/ytcp-social-suggestion-input/div"
             self.context.find_elements(By.XPATH, xpath)[0].click_pro()
             log(debug_text, True)
             
@@ -167,12 +172,12 @@ class YoutubeWebUploader(Uploader):
             # Choose Made-For-Kids option by click radio button.
             debug_text = "Choose Made-For-Kids option by click radio button."
             if video_model.is_for_kids:
-                xpath = "/html/body/ytcp-uploads-dialog/tp-yt-paper-dialog/div/ytcp-animatable[1]/ytcp-ve/ytcp-video-metadata-editor/div/ytcp-video-metadata-editor-basics/div[5]/ytkc-made-for-kids-select/div[4]/tp-yt-paper-radio-group/tp-yt-paper-radio-button[1]"
+                xpath = "VIDEO_MADE_FOR_KIDS_MFK"
             else:
-                xpath = "/html/body/ytcp-uploads-dialog/tp-yt-paper-dialog/div/ytcp-animatable[1]/ytcp-ve/ytcp-video-metadata-editor/div/ytcp-video-metadata-editor-basics/div[5]/ytkc-made-for-kids-select/div[4]/tp-yt-paper-radio-group/tp-yt-paper-radio-button[2]"
-            a = self.context.find_elements(By.XPATH, xpath)[0]
-            log(a)
-            a.click_pro()
+                xpath = "VIDEO_MADE_FOR_KIDS_NOT_MFK"
+
+            xpath = f"{xpath_editor_basics}/div[@id='audience']/ytkc-made-for-kids-select/div[@class='made-for-kids-rating-container style-scope ytkc-made-for-kids-select']/tp-yt-paper-radio-group/tp-yt-paper-radio-button[@name='{xpath}']"
+            self.context.find_elements(By.XPATH, xpath)[0].click()
             log(debug_text, True)
 
             # Click advance detail.
@@ -185,13 +190,13 @@ class YoutubeWebUploader(Uploader):
 
             # Input keywords to input text field.
             debug_text = "Input keywords to input text field."
-            xpath = "/html/body/ytcp-uploads-dialog/tp-yt-paper-dialog/div/ytcp-animatable[1]/ytcp-ve/ytcp-video-metadata-editor/div/ytcp-video-metadata-editor-advanced/div[4]/ytcp-form-input-container/div[1]/div/ytcp-free-text-chip-bar/ytcp-chip-bar/div/input"
+            xpath = f"{xpath_editor_advanced}/div[4]/ytcp-form-input-container/div[1]/div/ytcp-free-text-chip-bar/ytcp-chip-bar/div/input"
             self.context.find_elements(By.XPATH, xpath)[0].send_keys(video_model.keywords)
             log(debug_text, True)
 
             # Select video category.
             debug_text = "Select video category."
-            xpath = "/html/body/ytcp-uploads-dialog/tp-yt-paper-dialog/div/ytcp-animatable[1]/ytcp-ve/ytcp-video-metadata-editor/div/ytcp-video-metadata-editor-advanced/div[9]/div[3]/ytcp-form-select/ytcp-select"
+            xpath = f"{xpath_editor_advanced}/div[9]/div[3]/ytcp-form-select/ytcp-select"
             self.context.find_elements(By.XPATH, xpath)[0].click_pro()
             xpath = f"/html/body/ytcp-text-menu/tp-yt-paper-dialog/tp-yt-paper-listbox/tp-yt-paper-item[@test-id='{video_category}']"
             self.context.find_elements(By.XPATH, xpath)[0].click_pro()
