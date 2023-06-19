@@ -118,6 +118,7 @@ class CsvDatastore(Datastore):
     def update(self, id, field_id, **kwargs):
         context = self.open()
         headers = [field_id, *list(kwargs.keys())]
+        result = False
         
         try:
             reader = csv.DictReader(context.reader, fieldnames=headers, delimiter=';')
@@ -132,14 +133,19 @@ class CsvDatastore(Datastore):
             for row in reader:
                 if row[field_id] == id:
                     row = { key: rts(value) for key, value in kwargs.items() }
+                    row[field_id] = id
                 writer.writerow(row)
-
+            
+            result = True
         finally:
             self.close(context)
+
+        return result
 
     def delete(self, id, field_id, **kwargs):
         context = self.open()
         headers = [field_id, *list(kwargs.keys())]
+        result = False
         
         try:
             reader = csv.DictReader(context.reader, fieldnames=headers, delimiter=';')
@@ -154,10 +160,14 @@ class CsvDatastore(Datastore):
             for row in reader:
                 if row[field_id] == id:
                     continue
-                writer.writerow(row)
-
+                else:
+                    writer.writerow(row)
+            
+            result = True
         finally:
             self.close(context)
+
+        return result
 
 class CsvDatastoreContext:
 

@@ -8,13 +8,13 @@ from yt15m.repository.video import VideoRepository
 PROGRESS_DONE = "Done"
 
 def execute(cmd):
-    popen = subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True)
-    for stdout_line in iter(popen.stdout.readline, ""):
-        yield stdout_line 
-    popen.stdout.close()
-    return_code = popen.wait()
-    if return_code:
-        raise subprocess.CalledProcessError(return_code, cmd)
+    with subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True) as popen:
+        for stdout_line in iter(popen.stdout.readline, ""):
+            yield stdout_line 
+        return_code = popen.wait()
+        if return_code:
+            raise subprocess.CalledProcessError(return_code, cmd)    
+    return ""
 
 def execute_cmd(vm, verbose=False, cookie_login=None, chromedriver=None):
     cmd = [
@@ -37,7 +37,7 @@ def execute_cmd(vm, verbose=False, cookie_login=None, chromedriver=None):
     ]
 
     for line in execute(cmd):
-        print(line, end="")
+        print(line, end="", flush=True)
 
     pass
 

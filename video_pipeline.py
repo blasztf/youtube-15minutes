@@ -166,7 +166,10 @@ def update_video(description_part: str, repo: Repository, uploader: Uploader, fr
         if video.progress == PROGRESS_REWRITING:
             video_playlist = "" if video.playlist is None else f"\n\n{video.playlist}"
             if uploader.rewrite_description(f"{description_part}{video_playlist}\n\n{video.description}", video.vid, video):
-                video.progress = PROGRESS_PLAYLIST if video.playlist is not None else PROGRESS_DONE
+                if video.playlist is not None:
+                    video.progress = PROGRESS_PLAYLIST
+                else:
+                    video.progress = PROGRESS_DONE
                 repo.update(video)
             else:
                 return (False, PerformResult('E007', PROGRESS_REWRITING))
