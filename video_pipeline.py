@@ -154,7 +154,9 @@ def retrieve_fragments_model(set_fragments, repo: Repository, **kwargs):
 
 def upload_video(set_description_part: str, repo: Repository, uploader: Uploader, fragments: list[VideoModel], **kwargs):
     description_part = ""
-    for video in fragments:
+    fragments_size = len(fragments)
+    for index in range(fragments_size):
+        video = fragments[index]
         if video.progress == PROGRESS_UPLOAD:
             video.vid = uploader.upload_video(video)
             if video.vid is not None:
@@ -164,7 +166,10 @@ def upload_video(set_description_part: str, repo: Repository, uploader: Uploader
         if video.vid is None:
             return (False, PerformResult('E005', PROGRESS_UPLOAD))
         else:
-            description_part += f"https://youtu.be/{video.vid}\n"
+            description_part += f"PART {index} : https://youtu.be/{video.vid}\n"
+
+    if fragments[0].playlist is not None:
+        description_part += f"\nPLAYLIST : {fragments[0].playlist}\n"
 
     set_description_part(description_part)
     return (True, None)
@@ -172,8 +177,7 @@ def upload_video(set_description_part: str, repo: Repository, uploader: Uploader
 def update_video(description_part: str, repo: Repository, uploader: Uploader, fragments: list[VideoModel], **kwargs):
     for video in fragments:
         if video.progress == PROGRESS_REWRITING:
-            video_playlist = "" if video.playlist is None else f"\n\n{video.playlist}"
-            if uploader.rewrite_description(f"{description_part}{video_playlist}\n\n{video.description}", video.vid, video):
+            if uploader.rewrite_description(f"{description_part}\n\n{video.description}", video.vid, video):
                 if video.playlist is not None:
                     video.progress = PROGRESS_PLAYLIST
                 else:
