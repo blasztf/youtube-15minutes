@@ -11,11 +11,10 @@ PROGRESS_DONE = "Done"
 def execute(cmd):
     with subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True) as popen:
         for stdout_line in iter(popen.stdout.readline, ""):
-            yield stdout_line 
+            print(stdout_line, end="", flush=True)
         return_code = popen.wait()
         if return_code:
-            raise subprocess.CalledProcessError(return_code, cmd)    
-    return ""
+            raise subprocess.CalledProcessError(return_code, cmd)
 
 def execute_cmd(vm, verbose=False, cookie_login=None, chromedriver=None):
     cmd = [
@@ -38,10 +37,13 @@ def execute_cmd(vm, verbose=False, cookie_login=None, chromedriver=None):
         "--show-web-browser"
     ]
 
-    for line in execute(cmd):
-        print(line, end="", flush=True)
-
-    pass
+    result = True
+    try:
+        execute(cmd)
+    except:
+        result = False
+    
+    return result
 
 def main():
     load_dotenv()
@@ -69,10 +71,12 @@ def main():
         list_vm = repo.all()
         for vm in list_vm:
             if vm.progress != PROGRESS_DONE:
-                execute_cmd(vm, verbose=verbose, cookie_login=cookie_login, chromedriver=chromedriver)
-                builder = VideoModelBuilder(vm)
-                builder.progress(PROGRESS_DONE)
-                repo.update(builder.build())
+                if execute_cmd(vm, verbose=verbose, cookie_login=cookie_login, chromedriver=chromedriver):
+                    builder = VideoModelBuilder(vm)
+                    builder.progress(PROGRESS_DONE)
+                    repo.update(builder.build())
+                else:
+                    break
     pass
 
 if __name__ == "__main__":
