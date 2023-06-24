@@ -62,9 +62,13 @@ def main():
         print(f"Datastore location: {repo_dir}")
         print("Try to add some video data in datastore, then try again")
     else:
+        builder = None
         list_vm = repo.all()
         for vm in list_vm:
             execute_cmd(vm, verbose=verbose, cookie_login=cookie_login, chromedriver=chromedriver)
+            builder = VideoModelBuilder(vm)
+            builder.progress(PROGRESS_DONE)
+            repo.update(builder.build())
     pass
 
 if __name__ == "__main__":
