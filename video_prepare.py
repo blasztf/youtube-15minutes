@@ -13,7 +13,6 @@ def execute(cmd):
     with subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True) as popen:
         for stdout_line in iter(popen.stdout.readline, ""):
             print(stdout_line, end="", flush=True)
-        # return_code = popen.wait()
         result = json.loads(popen.stderr.readline)
         popen.wait()
         if result['error_code'] != '':

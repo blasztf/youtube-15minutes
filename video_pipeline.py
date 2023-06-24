@@ -260,11 +260,11 @@ def main(args):
             log("PERFORM: Updating video fragment in youtube...")
             perform(update_video(*description_part, recorder, *uploader, *fragments))
 
-        out(json.dumps(vars(PerformResult())[0], ensure_ascii=False))
+        out(json.dumps(vars(PerformResult()), ensure_ascii=False))
 
     except PerformError as pe:
         log(f"FAILED TO PERFORM: {pe.message}", False)
-        err(json.dumps(vars(pe.result)[0], ensure_ascii=False))
+        err(json.dumps(vars(pe.result), ensure_ascii=False))
 
     finally:
         unlock_program()
