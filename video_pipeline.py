@@ -170,7 +170,7 @@ def upload_video(set_description_part: str, repo: Repository, uploader: Uploader
             description_part += f"PART {index + 1} : https://youtu.be/{video.vid}\n"
 
     if fragments[0].playlist is not None:
-        description_part += f"\nPLAYLIST : {fragments[0].playlist}\n"
+        description_part += f"\nPLAYLIST : https://www.youtube.com/playlist?list={fragments[0].playlist}\n"
 
     set_description_part(description_part)
     return (True, None)
