@@ -1,6 +1,7 @@
 
 import os
 import subprocess
+from dotenv import load_dotenv
 
 from yt15m.model.video import *
 from yt15m.repository.video import VideoRepository
@@ -31,6 +32,7 @@ def execute_cmd(vm, verbose=False, cookie_login=None, chromedriver=None):
         "--video-playlist", str(vm.playlist),
         "--video-vid", str(vm.vid),
         "--video-progress", str(vm.progress),
+        "--uploader", 'web',
         "--cookie-login-path", cookie_login,
         "--chromedriver-path", chromedriver,
         "--show-web-browser"
@@ -42,9 +44,10 @@ def execute_cmd(vm, verbose=False, cookie_login=None, chromedriver=None):
     pass
 
 def main():
-    verbose = True
-    cookie_login = ""
-    chromedriver = ""
+    load_dotenv()
+    verbose = os.getenv('YT15M_VERBOSE') == '1'
+    cookie_login = os.getenv('YT15M_UPLOADER_WEB_COOKIELOGIN')
+    chromedriver = os.getenv('YT15M_UPLOADER_WEB_CHROMEDRIVER')
     repo = VideoRepository("./", "data")
     repo_dir = os.path.join(repo.context.store, repo.context.branch)
 
@@ -65,10 +68,11 @@ def main():
         builder = None
         list_vm = repo.all()
         for vm in list_vm:
-            execute_cmd(vm, verbose=verbose, cookie_login=cookie_login, chromedriver=chromedriver)
-            builder = VideoModelBuilder(vm)
-            builder.progress(PROGRESS_DONE)
-            repo.update(builder.build())
+            if vm.progress != PROGRESS_DONE:
+                execute_cmd(vm, verbose=verbose, cookie_login=cookie_login, chromedriver=chromedriver)
+                builder = VideoModelBuilder(vm)
+                builder.progress(PROGRESS_DONE)
+                repo.update(builder.build())
     pass
 
 if __name__ == "__main__":
