@@ -1,6 +1,7 @@
 
 import os
 import subprocess
+import json
 from dotenv import load_dotenv
 
 from yt15m.model.video import *
@@ -12,9 +13,12 @@ def execute(cmd):
     with subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True) as popen:
         for stdout_line in iter(popen.stdout.readline, ""):
             print(stdout_line, end="", flush=True)
-        return_code = popen.wait()
-        if return_code:
-            raise subprocess.CalledProcessError(return_code, cmd)
+        # return_code = popen.wait()
+        result = json.loads(popen.stderr.readline)
+        popen.wait()
+        if result['error_code'] != '':
+            raise Exception()
+
 
 def execute_cmd(vm, verbose=False, cookie_login=None, chromedriver=None):
     cmd = [

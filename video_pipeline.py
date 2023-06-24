@@ -11,6 +11,7 @@ from yt15m.repository.video import VideoRepository
 
 import os
 import argparse
+import json
 
 from yt15m.util.helper import *
 
@@ -259,11 +260,11 @@ def main(args):
             log("PERFORM: Updating video fragment in youtube...")
             perform(update_video(*description_part, recorder, *uploader, *fragments))
 
-        out(vars(PerformResult()))
+        out(json.dumps(vars(PerformResult())[0], ensure_ascii=False))
 
     except PerformError as pe:
         log(f"FAILED TO PERFORM: {pe.message}", False)
-        err(vars(pe.result))
+        err(json.dumps(vars(pe.result)[0], ensure_ascii=False))
 
     finally:
         unlock_program()
