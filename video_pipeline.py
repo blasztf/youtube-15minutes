@@ -129,12 +129,20 @@ def build_fragments_model(set_fragments, dst_path: str, repo: Repository, video_
     builder = VideoModelBuilder(video_model)
 
     fragments = []
-    for fname in list_fragment:
-        video = builder.file(os.path.join(dst_path, fname)).progress(PROGRESS_UPLOAD).build()
+    fragments_size = len(list_fragment)
+    for index in range(fragments_size):
+        fname = list_fragment[index]
+        video = builder.title(f"{video_model.title} (Part {index + 1} / {fragments_size})").file(os.path.join(dst_path, fname)).progress(PROGRESS_UPLOAD).build()
         if repo.add(video) is not None:
             fragments.append(video)
         else:
             return (False, PerformResult('E008', "Error when adding new video fragments to repo"))
+
+    if fragments_size == 1:
+        builder = VideoModelBuilder(fragments[0])
+        video = builder.title(video_model.title).build()
+        fragments[0] = video
+        repo.update(video)
 
     set_fragments(fragments)
     
@@ -166,7 +174,10 @@ def update_video(description_part: str, repo: Repository, uploader: Uploader, fr
         if video.progress == PROGRESS_REWRITING:
             video_playlist = "" if video.playlist is None else f"\n\n{video.playlist}"
             if uploader.rewrite_description(f"{description_part}{video_playlist}\n\n{video.description}", video.vid, video):
-                video.progress = PROGRESS_PLAYLIST if video.playlist is not None else PROGRESS_DONE
+                if video.playlist is not None:
+                    video.progress = PROGRESS_PLAYLIST
+                else:
+                    video.progress = PROGRESS_DONE
                 repo.update(video)
             else:
                 return (False, PerformResult('E007', PROGRESS_REWRITING))

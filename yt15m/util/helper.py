@@ -32,13 +32,13 @@ def log(text, proc=None):
                 text = colored(text, 'red')
         else:
             text += "|"
-        print (f"{text} {ori_text}\n")
+        print (f"{text} {ori_text}\n", flush=True)
 
 def out(*values):
-    print(values, file=sys.stdout)
+    print(values, file=sys.stdout, flush=True)
         
 def err(*values):
-    print(values, file=sys.stderr)
+    print(values, file=sys.stderr, flush=True)
 
 def use_hook(init=None):
     value = [ init ]
