@@ -14,7 +14,7 @@ def execute(cmd):
         for stdout_line in iter(popen.stdout.readline, ""):
             print(stdout_line, end="", flush=True)
         result = popen.stderr.readline()
-        result = json.loads(result)
+        result = json.loads(result[2:-4])
         print(result)
         popen.wait()
         if result['error_code'] != '':

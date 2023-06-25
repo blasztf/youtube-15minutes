@@ -198,7 +198,7 @@ def update_video(description_part: str, repo: Repository, uploader: Uploader, fr
 
 def vars2json(obj):
     result = json.dumps(vars(obj), ensure_ascii=False)
-    return result[0:-4]
+    return result
 
 def main(args):
     args = vars(args)
