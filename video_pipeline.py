@@ -196,6 +196,10 @@ def update_video(description_part: str, repo: Repository, uploader: Uploader, fr
 
     return (True, None)
 
+def vars2json(obj):
+    result = json.dumps(vars(obj), ensure_ascii=False)
+    return result
+
 def main(args):
     args = vars(args)
     
@@ -260,11 +264,14 @@ def main(args):
             log("PERFORM: Updating video fragment in youtube...")
             perform(update_video(*description_part, recorder, *uploader, *fragments))
 
-        out(json.dumps(vars(PerformResult()), ensure_ascii=False))
+        if args['verbose']:
+            err(vars2json(PerformResult()))
+        else:
+            out(vars2json(PerformResult()))
 
     except PerformError as pe:
         log(f"FAILED TO PERFORM: {pe.message}", False)
-        err(json.dumps(vars(pe.result), ensure_ascii=False))
+        err(vars2json(pe.result))
 
     finally:
         unlock_program()

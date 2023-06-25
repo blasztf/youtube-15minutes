@@ -10,10 +10,12 @@ from yt15m.repository.video import VideoRepository
 PROGRESS_DONE = "Done"
 
 def execute(cmd):
-    with subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True) as popen:
+    with subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True) as popen:
         for stdout_line in iter(popen.stdout.readline, ""):
             print(stdout_line, end="", flush=True)
-        result = json.loads(popen.stderr.readline)
+        result = popen.stderr.readline()
+        result = json.loads(result[2:-4])
+        print(result)
         popen.wait()
         if result['error_code'] != '':
             raise Exception()
