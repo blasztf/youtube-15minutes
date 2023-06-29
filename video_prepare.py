@@ -23,7 +23,7 @@ def execute(cmd):
             raise Exception()
 
 
-def execute_cmd(vm, verbose=False, cookie_login=None, chromedriver=None):
+def execute_cmd(vm, verbose=False, cookie_login=None, chromedriver=None, show_wb=False):
     cmd = [
         #"venv\\Scripts\\activate.bat", "&&",
         "python", "video_pipeline.py",
@@ -41,7 +41,7 @@ def execute_cmd(vm, verbose=False, cookie_login=None, chromedriver=None):
         "--uploader", 'web',
         "--cookie-login-path", cookie_login,
         "--chromedriver-path", chromedriver,
-        "--show-web-browser"
+        ("--show-web-browser" if show_wb else "")
     ]
 
     result = True
@@ -67,7 +67,7 @@ def check_list_datastore(set_list_datastore):
         f.close()
     if not os.path.exists(os.path.join(path_template, "series.txt")):
         f = open(os.path.join(path_template, "series.txt"), mode='w')
-        f.write("your series title, added after your video title.")
+        f.write("your series title.")
         f.close()
     sources = os.path.join(path_template, 'sources')
     os.makedirs(sources, exist_ok=True)
@@ -137,18 +137,17 @@ def main():
     verbose = os.getenv('YT15M_VERBOSE') == '1'
     cookie_login = os.getenv('YT15M_UPLOADER_WEB_COOKIELOGIN')
     chromedriver = os.getenv('YT15M_UPLOADER_WEB_CHROMEDRIVER')
+    show_wb = os.getenv('YT15M_UPLOADER_WEB_SHOWWEBBROWSER') == '1'
 
     list_datastore, set_list_datastore = use_hook()
 
     if check_list_datastore(set_list_datastore):
         builder = None
-        print(len(list_datastore[0]))
-        quit()
         for repo in list_datastore[0]:
             list_vm = repo.all()
             for vm in list_vm:
                 if vm.progress != PROGRESS_DONE:
-                    if execute_cmd(vm, verbose=verbose, cookie_login=cookie_login, chromedriver=chromedriver):
+                    if execute_cmd(vm, verbose=verbose, cookie_login=cookie_login, chromedriver=chromedriver, show_wb=show_wb):
                         builder = VideoModelBuilder(vm)
                         builder.progress(PROGRESS_DONE)
                         repo.update(builder.build())
