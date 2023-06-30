@@ -147,6 +147,7 @@ def main():
             list_vm = repo.all()
             for vm in list_vm:
                 if vm.progress != PROGRESS_DONE:
+                    print(f"Processing '{vm.title}'...")
                     if execute_cmd(vm, verbose=verbose, cookie_login=cookie_login, chromedriver=chromedriver, show_wb=show_wb):
                         builder = VideoModelBuilder(vm)
                         builder.progress(PROGRESS_DONE)
